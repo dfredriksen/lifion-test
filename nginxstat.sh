@@ -1,5 +1,5 @@
 #! /bin/dash
-USAGE="Usage: nginxstatuscodes $0 [-l logfile] [-h hostname [-u username]] [-s delay] [-o outputfile] [-m] [-b] [-r] [-t] [-j] [-c] [-e]"
+USAGE="Usage: nginxstatuscodes $0 [-l logfile] [-h hostname [-u username] [-a \"ssh-args\"] [-s delay] [-o outputfile] [-m] [-b] [-r] [-t] [-j] [-c] [-e]"
 
 #Parse the optional parameters. Technically everything is optional.
 #I could have made the optional flags -mbrtjce but this was more straightforward
@@ -12,6 +12,7 @@ do
         -u) shift; u="$1";;
         -s) shift; s="$1";;
     	-o) shift; o="$1";;
+	-a) shift; a="$1";;
         -m) m='1';;
         -b) b='1';;
         -r) r='1';;
@@ -195,6 +196,7 @@ parseLogfile () {
     COLORIZE=${6:-0}
     JSON=${7:-0}
     EXIST=${8:-0}
+    SSHARGS=${9:-""}
     #Set the initial file length. We always want it to read immediately
     LENGTH=0
 
@@ -206,36 +208,43 @@ parseLogfile () {
         else
             #if a remote path is specified, we can pull the file down locally
             if ! [ "$USER" = "" ]; then
-                TARGET="${USER}@${HOST}:${LOGPATH}"
+                TARGET="${USER}@${HOST} ${SSHARGS}"
             else
-                TARGET="${HOST}:${LOGPATH}"
+                TARGET="${HOST} ${SSHARGS}"
             fi
 
             #this can be improved several ways. One way is to check the 
             #difference on the target server and only pull down the difference, 
             #reducing the size of the download. Also we can use rsync instead of scp
-            SCPCOMMAND="scp ${TARGET} ./access.log"
-            ${SCPCOMMAND}
-            LOGFILE="./access.log"
-        fi
-
-        #ensure to always trigger on the first check
-        if [ "$LENGTH" = "0" ]; then
-            LENGTH=`wc -l $LOGFILE | awk '{ print $1 }'`
-            LENGTH=`expr "$LENGTH" - "1"`
+	    #busybox doesn't have scp so just going with ssh for now
+            SSHCOMMAND=`ssh ${TARGET} "cat $LOGPATH" > downloaded_access.log`; 
+	    #lets save it here so nobody else can modify it
+            LOGFILE="./downloaded_access.log"
         fi
     
         #Compare the difference and if there is a difference, print it out
         #in the specified format
         if [ -e "$LOGFILE" ]; then
+	    #ensure to always trigger on the first check
+	    if [ "$LENGTH" = "0" ]; then
+	        LENGTH=`wc -l $LOGFILE | awk '{ print $1 }'`
+	        LENGTH=`expr "$LENGTH" - "1"`
+	    fi
+
             NEWLENGTH=`wc -l $LOGFILE | awk '{ print $1 }'`
             outputDifference "$NEWLENGTH" "$LENGTH" "$LOGFILE" "$LINE" "$OUTPUT_FILE" "$JSON" "$COLORIZE"
             LENGTH=$NEWLENGTH
         else
-            echo "The nginx access log specified could not be found or is not a valid file"
+            echo "FATAL ERROR: The nginx access log specified could not be found or is not a valid file"
             exit 1;
         fi
-        
+       
+	#Delete the downloaded log now that we are done with it
+	if [ "$LOGFILE" = './downloaded_access.log' ]; then
+		rm "$LOGFILE" -rf
+	fi 
+
+	#exit the system instead of continuing the loop if flag is set 
         if [ "$EXIT" = "1" ]; then
             exit 0       
         fi
@@ -253,7 +262,8 @@ main () {
     USER=${3:-}
     GAP=${4}
     FLAGS=${5}   
-    OUTPUT_FILE=${6:-""}    
+    OUTPUT_FILE=${6:-""}   
+    SSHARGS=${7:-""} 
     #TODO Sanitize INPUT for logpath, user, and host
 
     #set the flags
@@ -273,7 +283,7 @@ main () {
     fi
 
     #parse the log file - this is infinite
-    parseLogfile "$LOGPATH" "$HOST" "$USER" "$GAP" "$LINE" "$COLORIZE" "$JSON" "$EXIT" "$OUTPUTFILE"
+    parseLogfile "$LOGPATH" "$HOST" "$USER" "$GAP" "$LINE" "$COLORIZE" "$JSON" "$EXIT" "$OUTPUTFILE" "$SSHARGS"
 
     #exit
     exit 0
@@ -281,6 +291,5 @@ main () {
 
 #set the flags variable because some shells will not allow too many arguments
 FLAGS="${m-0}"'|'"${b-0}"'|'"${r-0}"'|'"${t-0}"'|'"${j-0}"'|'"${c-0}"'|'"${e-0}"
-
 #MAIN
-main "$l" "$h" "$u" "${s-1}" "$FLAGS" "$o"
+main "$l" "$h" "$u" "${s-1}" "$FLAGS" "$o" "$a"
