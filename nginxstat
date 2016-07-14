@@ -1,9 +1,10 @@
 #! /bin/sh
-USAGE="Usage: nginxstatuscodes $0 [-l logfile] [-h hostname [-u username] [-a \"ssh-args\"] [-s delay] [-o outputfile] [-m] [-b] [-r] [-t] [-j] [-c] [-e]"
+VERSION="1.0.0"
+USAGE="Usage: nginxstat $0 [-l logfile] [-h hostname [-u username] [-a \"ssh-args\"] [-s delay] [-o outputfile] [-m] [-b] [-r] [-t] [-j] [-c] [-e] [-?]"
 
 #Parse the optional parameters. Technically everything is optional.
 #I could have made the optional flags -mbrtjce but this was more straightforward
-#loop through and match with a case statement
+#loop through and match with a case statement also long argument names
 while :
 do
     case $1 in
@@ -12,7 +13,7 @@ do
         -u) shift; u="$1";;
         -s) shift; s="$1";;
     	-o) shift; o="$1";;
-	-a) shift; a="$1";;
+     	-a) shift; a="$1";;
         -m) m='1';;
         -b) b='1';;
         -r) r='1';;
@@ -20,8 +21,10 @@ do
         -j) j='1';;
         -c) c='1';;
 	    -e) e='1';;
+        -V) echo "nginxstat v." $VERSION; exit 0;;
         --) shift; break;;
-        -*) echo "FATAL ERROR: invalid argument"; exit 1;;
+        -?) echo $USAGE; exit 0;;
+        -*) echo "Invalid argument"; echo $USAGE; echo "For more information, try typing man nginxstat"; exit 0;;
         *) break;;
     esac
     shift

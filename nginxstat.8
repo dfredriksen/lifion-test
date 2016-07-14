@@ -1,0 +1,85 @@
+.\" Manpage for nginxstat
+.TH man 8 "14 07 2016" "1.0" "nginxstat man page"
+.SH NAME
+    item \- nginxstat - A portable utility for rapidly streaming nginx status codes
+
+.SH SYNOPSIS
+       nginxstat [-l ACCESSLOG] [-h REMOTEHOST [-u USERNAME] [-a SSHARGS]] [-s DELAY] [-o OUTPUTFILE] [-m] [-b] [-r] [-t] [-c] [-j] [-e]
+
+.SH DESCRIPTION
+       This utliity is useful for streaming nginx status code data from the
+       access log. Either it can be used by a system administrator to scan
+       their system for anamolies or it can be used to create an API endpoint
+       for an internet facing user interface.
+ 
+.SH OPTIONS
+   Generic Program Information
+       -? Print a usage message briefly summarizing these command-line options, then exit.
+
+       -V
+              Print the version number of nginxstat to the standard output stream.  This version number should be included in all bug reports (see below).
+
+   Optional Parameters
+       -l ACCESSLOG
+              Set the path/filename to the nginx access.log to stream from. Default is /var/log/nginx/access.log.
+
+       -h HOSTNAME
+              Specify a hostname to connect to via ssh. If not used, nginxstat will search for -l on the local filesystem. Otherwise it will search for -l on the remote
+              host
+              
+       -u USERNAME
+              Specifies the username to use when attempting to connect to a remote host
+
+       -a ARGUMENTS
+              ssh arguments to use when connecting to a remote host
+
+       -s SECONDS
+              how long to wait before updating the data from the stream
+
+       -o OUTPUTFILE
+              target file for output
+
+       -m Adds the method of the requests to the output stream.
+    
+       -b Adds the size in bytes of the requests to the output stream.
+
+       -r Adds the resource of the requests to the output stream.
+
+       -t Removes the time/datestamp of the requests from the stram.
+
+       -c Enables color coding of statuses in human readability mode. Does not apply when the -j flag is set
+
+       -j Output in JSON format
+
+       -e exit the program immediately after fetching the latest data
+
+.SH COPYRIGHT
+       Copyright 1998-2000, 2002, 2005-2014 Free Software Foundation, Inc.
+
+       This is free software; see the source for copying conditions.  There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+.SH BUGS
+   Reporting Bugs
+        Please file an issue unter the github repository https://www.github.com/dfredriksen/lifion-test
+
+.SH EXAMPLES
+   Streaming Human Readable Data in Color
+        nginxstat -l /var/log/nginx/myproject_access.log -c
+
+   Adding a Five Second Delay Between Updates
+        nginxstat -l /var/log/nginx/myproject_access.log -c -t 5
+
+   Remote NGINX Server as Target
+        nginxstat -l /var/log/nginx/someserver_access.log -h www.example.com -u root -c
+
+   Outputting results as JSON to a File
+        nginxstat -j -o /var/www/html/statuses.json
+
+   Display Additional Data
+        nginxstat -m -b -r
+
+.SH AUTHOR
+Daniel Fredriksen (dfredriksen@cyint.technology)
+
+
+

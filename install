@@ -1,0 +1,38 @@
+#! /bin/sh
+
+cp nginxstat /usr/local/sbin
+if ! [ $? = 0 ]; then
+     echo "FATAL ERROR: Could not copy nginxstat to /user/local/sbin. Please be sure you have the correct permissions and try again."
+     exit 1
+fi
+
+chmod a+x /usr/local/sbin/nginxstat
+if ! [ $? = 0 ]; then
+     echo "FATAL ERROR: Could not modify permissions on nginxstat. Please be sure you have the correct permissions and try again."
+     exit 1
+fi
+
+INPATH=`echo $PATH|grep /usr/local/sbin`
+if ! [ -n "$INPATH" ]; then
+    echo "WARNING: /usr/local/sbin was not detected in your path. Please be sure to update your path according to your distribution in order to compete the installation"
+fi
+
+MANPATH=`manpath|awk -F':' '{ print $3 }'`
+if ! [ -n "$MANPATH" ]; then
+    MANPATH=`manpath|awk -F':' '{ print $1 }'`
+    echo "WARNING: Failed to copy manpage to your manpath. Please make sure your settings are correct and try again."
+else
+    cp nginxstat.8.gz "$MANPATH"'/man8/nginxstat.8'
+    if ! [ $? = 0 ]; then
+         echo "WARNING: Could not copy the manpage into the manpath."
+         exit 1
+    fi
+
+fi 
+
+mandb
+if ! [ $? = 0 ]; then     
+     echo "WARNING: Could not update the mandb interface"
+     exit 1
+fi
+
