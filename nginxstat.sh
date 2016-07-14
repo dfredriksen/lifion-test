@@ -1,4 +1,4 @@
-#! /bin/dash
+#! /bin/sh
 USAGE="Usage: nginxstatuscodes $0 [-l logfile] [-h hostname [-u username] [-a \"ssh-args\"] [-s delay] [-o outputfile] [-m] [-b] [-r] [-t] [-j] [-c] [-e]"
 
 #Parse the optional parameters. Technically everything is optional.
